@@ -42,10 +42,10 @@ if [[ $DIR_RANK == "" ]]; then
     DIR_RANK=4
 fi
 if [[ $GIT_RANK == "" ]] then
-    GIT_RANK=5
+    GIT_RANK=-1
 fi
 if [[ $VENV_RANK = "" ]]; then
-    VENV_RANK=6
+    VENV_RANK=5
 fi
 if [[ $BAT_RANK == "" ]] then
     BAT_RANK=0
@@ -54,7 +54,7 @@ if [[ $DATE_RANK == "" ]]; then
     DATE_RANK=0
 fi
 if [[ $TIME_RANK == "" ]]; then
-    TIME_RANK=-1
+    TIME_RANK=-2
 fi
 
 # default colors
@@ -201,21 +201,17 @@ ZSH_THEME_GIT_PROMPT_DIVERGED=" \u21b0"
 
 function gitrepo(){
 	if [ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]; then
+		local repo="$(basename "$(git rev-parse --show-toplevel)")"
+		local branch="$(git rev-parse --abbrev-ref HEAD)"
+		local gitstatus="$(git_prompt_status 2>/dev/null)"
 		if [[ $(git status --porcelain) == "" ]]; then
-            if [[ $(command -v git_prompt_info 2> /dev/null) ]]; then
-    	        create_segment $GIT_CLEAN_b $GIT_CLEAN_f "$(git_prompt_info)$(git_prompt_status)" $GIT_RANK
-            else
-    	        create_segment $GIT_CLEAN_b $GIT_CLEAN_f "$ZSH_THEME_GIT_PROMPT_PREFIX$(git rev-parse --abbrev-ref HEAD)" $GIT_RANK
-            fi
-    	else
-            if [[ $(command -v git_prompt_info 2> /dev/null) ]]; then
-    	        create_segment $GIT_b $GIT_f "$(git_prompt_info)$(git_prompt_status)" $GIT_RANK
-            else
-    	        create_segment $GIT_b $GIT_f "$ZSH_THEME_GIT_PROMPT_PREFIX$(git rev-parse --abbrev-ref HEAD)" $GIT_RANK
-            fi
-    	fi
+			create_segment $GIT_CLEAN_b $GIT_CLEAN_f "$ZSH_THEME_GIT_PROMPT_PREFIX${repo} (${branch})${gitstatus}" $GIT_RANK
+		else
+			create_segment $GIT_b $GIT_f "$ZSH_THEME_GIT_PROMPT_PREFIX${repo} (${branch})${gitstatus}" $GIT_RANK
+		fi
 	fi
 }
+
 
 function venv(){
     if [ -n "$VIRTUAL_ENV" ]; then
