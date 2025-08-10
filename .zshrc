@@ -4,10 +4,18 @@
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+
+export NVM_LAZY_LOAD=true
+source "/home/apiratchai/.zsh-nvm.zsh"
+
+
+
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
+
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+#ZSH_THEME="agnoster"
 ZSH_THEME="comfyline"
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244' #244 is perfect
 
@@ -72,7 +80,8 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244' #244 is perfect
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 
-plugins=(git
+plugins=(
+git
 z
 zsh-autosuggestions
 extract
@@ -126,3 +135,7 @@ export PATH=$PATH:~/.local/bin
 
 
 
+
+#export NVM_DIR="$HOME/.nvm"
+#[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+#[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

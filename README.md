@@ -36,13 +36,18 @@
     cd ~/.config/kitty
     ln -s ./kitty-themes/themes/Desert.conf ~/.config/kitty/theme.conf
     ```
+- custom theme (currently using): inspired by Everforest Theme  
+[github.com/bgrnwd/everforest-kitty](https://github.com/bgrnwd/everforest-kitty)  
+hard coded into ~/.config/kitty/kitty.conf
 - Config file path: `~/.config/kitty/kitty.conf`  
 
 ---
 
 ## Zsh Configuration (.zshrc)
 
-- Zsh shell setup with plugins and aliases.  
+- Zsh shell setup with plugins and aliases.
+- fix nvm performance issue on load  
+    guide here [varun.ch/posts/slow-nvm/](https://varun.ch/posts/slow-nvm/)
 - Oh-My-Zsh.
 - theme: Comfyline (custom)
     - [gitlab.com/imnotpua/comfyline_prompt.git](https://gitlab.com/imnotpua/comfyline_prompt)
@@ -58,7 +63,7 @@
 - List of GNOME extensions I use to improve desktop productivity.  
 - Installation via GNOME Extensions website.
 - Extentions used:  
-  - [**Blue My Shell**](https://github.com/aunetx/blur-my-shell) — add blur to gnome shell  
+  - [**Blur My Shell**](https://github.com/aunetx/blur-my-shell) — add blur to gnome shell  
   - [**Clipboard Histroy**](https://github.com/SUPERCILEX/gnome-clipboard-history) — clipborad manager
   - [**Hibernate Status Button**](https://github.com/arelange/gnome-shell-extension-hibernate-status)
   - [**Open Bar**](https://github.com/neuromorph/openbar)
