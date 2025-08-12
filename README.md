@@ -11,7 +11,7 @@
 ---
 
 ## Contents
-
+- [Utilities](#utilities)
 - [Kitty Terminal](#kitty-terminal)  
 - [Zsh Configuration (.zshrc)](#zsh-configuration-zshrc)  
 - [GNOME Extensions](#gnome-extensions)
@@ -19,14 +19,25 @@
 
 ---
 
+## Utilities
+credits : https://github.com/ibraheemdev/modern-unix 
+- [bat](https://github.com/sharkdp/bat) : A `cat` clone with syntax highlighting and Git integration.
+- [lsd](https://github.com/Peltoche/lsd) : The next gen file listing command. Backwards compatible with `ls`.
+- [gtop](https://github.com/aksakalli/gtop) : System monitoring dashboard for terminal.
+- [dust](https://github.com/bootandy/dust) : A more intuitive version of `du` written in rust.
+- [tldr](https://github.com/tldr-pages/tldr) : A community effort to simplify `man` pages with practical examples.
+
+![screenshot1](other/screenshot1.png "screenshot1")  
+`gtop` on left, `dust` on top-right, `tldr` on bottom-right.
+
 ## Kitty Terminal
 
-- nightly kitty built. (anything 0.37.0+)
+- nightly kitty built. ( v.0.37.0 or newer should work )
     ```bash
     curl -L https://sw.kovidgoyal.net/kitty/installer.sh | sh /dev/stdin \
     installer=nightly
     ```
-- theme: Desert:
+- theme: Desert
 
     ```bash
     THEME=https://raw.githubusercontent.com/dexpota/kitty-themes/master/themes/Desert.conf
@@ -38,8 +49,7 @@
     ```
 - custom theme (currently using): inspired by Everforest Theme  
 [github.com/bgrnwd/everforest-kitty](https://github.com/bgrnwd/everforest-kitty)  
-hard coded into ~/.config/kitty/kitty.conf
-- Config file path: `~/.config/kitty/kitty.conf`  
+hard coded into `~/.config/kitty/kitty.conf`
 
 ---
 
@@ -74,6 +84,7 @@ hard coded into ~/.config/kitty/kitty.conf
 ---
 
 ## Color palette
+for Open Bar and firefox theme
 ![palette](other/pallete.png "palette")  
   
 Extracted from wallpaper
