@@ -22,8 +22,11 @@
 ## Utilities
 credits : https://github.com/ibraheemdev/modern-unix 
 - [bat](https://github.com/sharkdp/bat) : A `cat` clone with syntax highlighting and Git integration.
-- [lsd](https://github.com/Peltoche/lsd) : The next gen file listing command. Backwards compatible with `ls`.
-- [gtop](https://github.com/aksakalli/gtop) : System monitoring dashboard for terminal.
+- [lsd](https://github.com/Peltoche/lsd) : The next gen file listing command. Backwards compatible with `ls`.  
+add `alias lsd='lsd --color=always --icon=always'` to .zshrc to force output in colors and icons.
+- ~~[gtop](https://github.com/aksakalli/gtop) : System monitoring dashboard for terminal. (written in JS, slower than btop)~~
+- [btop](https://github.com/aristocratos/btop) : Resource monitor that shows usage and stats for processor, memory, disks, network and processes.
+C++ version and continuation of [bashtop](https://github.com/aristocratos/bashtop) and [bpytop](https://github.com/aristocratos/bpytop). (written in C++, this one is so much faster than gtop.)
 - [dust](https://github.com/bootandy/dust) : A more intuitive version of `du` written in rust.
 - [tldr](https://github.com/tldr-pages/tldr) : A community effort to simplify `man` pages with practical examples.
 
