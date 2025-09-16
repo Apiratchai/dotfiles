@@ -61,6 +61,8 @@ hard coded into `~/.config/kitty/kitty.conf`
 - Zsh shell setup with plugins and aliases.
 - fix nvm performance issue on load  
     guide here [varun.ch/posts/slow-nvm/](https://varun.ch/posts/slow-nvm/)
+    ```bash
+    nvm install rc
 - Oh-My-Zsh.
 - theme: Comfyline (custom)
     - [gitlab.com/imnotpua/comfyline_prompt.git](https://gitlab.com/imnotpua/comfyline_prompt)
