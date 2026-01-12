@@ -96,6 +96,8 @@ Extracted from wallpaper
   
 ![wallpaper](wallpaper/wallpaper.png "wallpaper")
 
+![new wallpaper](wallpaper/BigSur.jpg)
+
 ---
 
 Feel free to explore and adapt
