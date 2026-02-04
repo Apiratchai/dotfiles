@@ -5,8 +5,8 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 setopt combiningchars
 
 # NVM lazy load
-export NVM_LAZY_LOAD=true
-source "$HOME/.zsh-nvm.zsh" --no-use
+#export NVM_LAZY_LOAD=true
+#source "$HOME/.zsh-nvm.zsh" --no-use
 
 
 plugins=(
