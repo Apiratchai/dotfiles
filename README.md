@@ -87,6 +87,11 @@ hard coded into `~/.config/kitty/kitty.conf`
   - [**Tiling Assistant**](https://github.com/Leleat/Tiling-Assistant) — better tiling tool
 
 ---
+ 
+### Firefox theme
+main theme is [`Rose`](https://addons.mozilla.org/en-US/firefox/addon/aobcgffnbkbipbflopponndoiommhn/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search) by user lce1670
+
+---
 
 ## Color palette
 for Open Bar and firefox theme
