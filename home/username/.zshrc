@@ -15,23 +15,35 @@ plugins=(
   colored-man-pages
 )
 
+DISABLE_AUTO_UPDATE=true
 source $ZSH/oh-my-zsh.sh
 
 ### PATH cleanup
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/go/bin:$PATH"
-export PATH="/opt/jadx/bin:$PATH"
-export PATH="/opt/john/run:$PATH"
-export PATH="$HOME/.bun/bin:$PATH"
+export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:$HOME/go/bin"
+export PATH="$PATH:/opt/jadx/bin"
+export PATH="$PATH:$HOME/.bun/bin"
+export PATH="$PATH:/opt/splunk/bin"
+#export PATH="$PATH:/opt/john/run"
+export PATH="$PATH:/opt/bloodhound/"
 
-### Aliases
-alias john='/opt/john/run/john'
-alias fetch='fastfetch'
+### Aliasesalias fetch='fastfetch'
 alias ff='fastfetch'
+alias john="/opt/john/run/john"
 
 # Bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # Brew
 #eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+
+#this is tricky
+alias python='python3'
+alias ssh='kitten ssh'
+alias firefox='firefox-beta'
+
+
+
+
 
