@@ -1,13 +1,14 @@
 # Dotfiles
 
-- OS: Debian GNU/Linux 12 (bookworm)
-- Kernel: 6.1.0-37-amd64
+**moving to Fedora Workstation soon**
+- OS: Debian GNU/Linux 13 (trixie)
+- Kernel: 6.12.85+deb13-amd64
 - Shell: zsh 5.9 
-- DE: GNOME 43.9
-- WM: Mutter
+- DE: GNOME 48.7
+- WM: Mutter (Wayland)
 - Terminal: kitty
-- Theme: Adwaita [GTK2/3]
-- Icons: Adwaita [GTK2/3]
+- Theme: Adwaita [GTK2/3/4]
+- Icons: Adwaita [GTK2/3/4]
 ---
 
 ## Contents
@@ -80,11 +81,21 @@ hard coded into `~/.config/kitty/kitty.conf`
 - Extentions used:  
   - [**Blur My Shell**](https://github.com/aunetx/blur-my-shell) — add blur to gnome shell  
   - [**Clipboard Histroy**](https://github.com/SUPERCILEX/gnome-clipboard-history) — clipborad manager
+    - [setting](other/clipboard_history.png)
+
   - [**Hibernate Status Button**](https://github.com/arelange/gnome-shell-extension-hibernate-status)
   - [**Open Bar**](https://github.com/neuromorph/openbar)
+    - [setting](gnome/openbar_setting)
   - [**Rounded Window Corners**](https://github.com/yilozt/rounded-window-corners)
   - [**Show Desktop Applet**](https://github.com/Valent-in/Show-Desktop-Applet) — add windows-like show desktop icon and shortkey
+    - [setting](other/show_desktop_applet.png)
   - [**Tiling Assistant**](https://github.com/Leleat/Tiling-Assistant) — better tiling tool
+    - [setting](other/tiling-asistant.png)
+  - [**Reorder Workspace**](https://github.com/smmr0/gnome-reorder-workspaces)
+    - [setting](other/reorder_workspace.png)
+
+![image of currently activated](other/gnome_extensions.png)
+currently activated extensions (13/05/2026)
 
 ---
  
