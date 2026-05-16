@@ -91,6 +91,7 @@ hard coded into `~/.config/kitty/kitty.conf`
     - [setting](other/show_desktop_applet.png)
   - [**Tiling Assistant**](https://github.com/Leleat/Tiling-Assistant) — better tiling tool
     - [setting](other/tiling-asistant.png)
+    - my keybindings has 2 conflicts with GNOME. please change the "Switch to workspace to the left/right"
   - [**Reorder Workspace**](https://github.com/smmr0/gnome-reorder-workspaces)
     - [setting](other/reorder_workspace.png)
 
