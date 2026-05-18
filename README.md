@@ -74,6 +74,16 @@ hard coded into `~/.config/kitty/kitty.conf`
 
 ---
 
+## Fonts
+
+- Firacode 
+  - sudo dnf install fira-code-fonts
+- [IBM Plex Sans Thai Looped](https://fonts.google.com/specimen/IBM+Plex+Sans+Thai+Looped)
+  - mv the fonts to  `/usr/share/fonts`
+  - `sudo fc-cache -f -v`
+
+---
+
 ## GNOME Extensions
 
 - List of GNOME extensions I use to improve desktop productivity.  
