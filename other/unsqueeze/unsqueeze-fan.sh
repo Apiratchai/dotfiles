@@ -30,6 +30,15 @@ for i in $(seq 1 20); do
 done
 [ -r "$TEMP" ] || { echo "unsqueeze-fan: no temp source" >&2; exit 1; }
 
+# Without a writable pwm node every fan write would silently no-op while
+# the daemon still reports "full".  Fail fast instead (Restart=always
+# retries if the node only appears late).
+for i in $(seq 1 20); do
+    [ -w "$PWM" ] && break
+    sleep 1
+done
+[ -w "$PWM" ] || { echo "unsqueeze-fan: no writable pwm node ($PWM)" >&2; exit 1; }
+
 modprobe acpi_call 2>/dev/null || true
 
 fan_full() {

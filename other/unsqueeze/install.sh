@@ -386,8 +386,17 @@ fi
 systemctl daemon-reload
 systemctl enable --now unsqueeze-power.service 2>/dev/null || true
 systemctl enable --now unsqueeze-power.timer   2>/dev/null || true
-systemctl enable --now unsqueeze-fan.service   2>/dev/null || true
-systemctl restart unsqueeze-fan.service 2>/dev/null || true
+# "Auto only" (FAN_ENABLED=0) keeps the fan service off entirely: the
+# daemon exits immediately on a disabled config, and Restart=always
+# would otherwise bounce it every 5s forever.
+if [ "$FAN_ENABLED" = "1" ]; then
+  systemctl enable --now unsqueeze-fan.service 2>/dev/null || true
+  # Restart applies a changed /etc/unsqueeze.conf on re-runs
+  # (enable --now is a no-op on an already-running unit).
+  systemctl restart unsqueeze-fan.service 2>/dev/null || true
+else
+  systemctl disable --now unsqueeze-fan.service 2>/dev/null || true
+fi
 note "  ✓ services enabled"
 
 # ── Stage 6: cleanup (only if present) ────────────────────────────────────
@@ -426,8 +435,12 @@ else
   warn "  ✗ MMIO PL1 = $pl1, expected $PL1_AC"
   ok=0
 fi
+fan_ok=1
+if [ "$FAN_ENABLED" = "1" ]; then
+  systemctl is-enabled unsqueeze-fan.service >/dev/null 2>&1 || fan_ok=0
+fi
 if systemctl is-enabled unsqueeze-power.service >/dev/null 2>&1 && \
-   systemctl is-enabled unsqueeze-fan.service >/dev/null 2>&1; then
+   [ "$fan_ok" = "1" ]; then
   note "  ✓ services enabled"
 else
   warn "  ✗ a service failed to enable"
