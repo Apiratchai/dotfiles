@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # unsqueeze-fan.sh — binary fan hysteresis daemon.
-# Package temp > FAN_ON: fan FULL speed (kernel WMI, plus EC SPIN bonus).
-# Package temp < FAN_OFF for at least MIN_FULL_SECONDS: back to EC auto (quiet).
-# The time latch prevents rapid full/auto cycling under oscillating loads.
+# Package temp >= FAN_ON: fan FULL speed (kernel WMI, plus EC SPIN bonus).
+# Package temp <= FAN_OFF: back to EC auto (quiet).
+# The wide deadband (FAN_ON - FAN_OFF = 10C) guarantees no toggling around
+# the boundary: once full, it stays full until the temp drops well below.
 # Polls every POLL seconds; only writes on state change.
 set -u
 
@@ -15,12 +16,10 @@ FAN_ON=78
 FAN_OFF=68
 FAN_ENABLED=1
 POLL=5
-MIN_FULL_SECONDS=120
 
 [ -r "$CONF" ] && . "$CONF"
 
 state=auto
-full_since=0
 
 [ "$FAN_ENABLED" = "1" ] || { echo "unsqueeze-fan: disabled in $CONF"; exit 0; }
 
@@ -47,14 +46,11 @@ fan_auto() {
 
 while true; do
     t=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
-    now=$(date +%s 2>/dev/null || echo 0)
     if [ "$state" = "auto" ] && [ "$t" -ge "$FAN_ON" ]; then
         fan_full
         state=full
-        full_since=$now
         echo "unsqueeze-fan: full (${t}C)"
-    elif [ "$state" = "full" ] && [ "$t" -le "$FAN_OFF" ] \
-        && [ $(( now - full_since )) -ge "$MIN_FULL_SECONDS" ]; then
+    elif [ "$state" = "full" ] && [ "$t" -le "$FAN_OFF" ]; then
         fan_auto
         state=auto
         echo "unsqueeze-fan: auto (${t}C)"
