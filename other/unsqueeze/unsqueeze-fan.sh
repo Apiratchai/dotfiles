@@ -30,11 +30,12 @@ done
 modprobe acpi_call 2>/dev/null || true
 
 fan_full() {
+    # Kernel WMI full-speed is the reliable path (works in every EC state).
+    echo 0 > "$PWM" 2>/dev/null
+    # Bonus: direct EC override for the extra ~400 RPM, where honored.
     if [ -w "$ACPI_CALL" ]; then
         echo '\_SB.PC00.LPCB.EC0_.SPIN 1 255' > "$ACPI_CALL" 2>/dev/null
-        return
     fi
-    echo 0 > "$PWM" 2>/dev/null
 }
 
 fan_auto() {
