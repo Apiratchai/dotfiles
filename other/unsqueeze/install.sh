@@ -185,13 +185,31 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────
 # STAGES — Unsqueeze: ASUS Vivobook power-clamp + fan fix installer.
-# Interactive; re-runnable (keeps your previous choices). Run with sudo:
-#   sudo bash other/unsqueeze/install.sh
-# Non-interactive (defaults): UNSQUEEZE_ASSUME=1 sudo bash other/unsqueeze/install.sh
+# Works both from a clone (sudo bash other/unsqueeze/install.sh) and as a
+# one-liner (curl ... | sudo bash) — it fetches its component files from the
+# repo when they aren't next to it. Interactive; re-runnable.
+# Non-interactive (defaults): UNSQUEEZE_ASSUME=1 bash other/unsqueeze/install.sh
 # ──────────────────────────────────────────────────────────────────────────
 
 TOTAL_STAGES=7
 ENV_FILE=/etc/unsqueeze.conf
+
+# tty_read — read a line from the terminal even when the script is piped
+# (curl | sudo bash), so menus still work. Falls back to stdin for
+# non-interactive use.
+tty_read() {
+  if [ -r /dev/tty ]; then
+    read -r "$@" < /dev/tty
+  else
+    read -r "$@" 2>/dev/null || true
+  fi
+}
+
+# tty-safe pause (shadow library version)
+pause() {
+  printf '  %s%s%s ' "$DIM" "${1:-Press Enter to continue}" "$RESET"
+  tty_read _ || true
+}
 
 # Override the generic wizard banner (no browser/API-key steps in this wizard).
 banner() {
@@ -219,9 +237,9 @@ menu() {
     i=$((i+1))
   done
   local sel=""
-  if [[ -t 0 && "${UNSQUEEZE_ASSUME:-0}" != "1" ]]; then
+  if [[ "${UNSQUEEZE_ASSUME:-0}" != "1" ]]; then
     printf '  %schoice [1-%d, Enter=1]:%s ' "$BOLD" "${#opts[@]}" "$RESET"
-    read -r sel || true
+    tty_read sel || true
   fi
   if [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "${#opts[@]}" ]; then
     MENU_SEL="$sel"
@@ -231,8 +249,36 @@ menu() {
 }
 
 if [[ "$(id -u)" -ne 0 ]]; then
-  printf '%sRun with sudo: sudo bash other/unsqueeze/install.sh%s\n' "$RED" "$RESET" >&2
+  printf '%sRun with sudo:  sudo bash other/unsqueeze/install.sh%s\n' "$RED" "$RESET" >&2
   exit 1
+fi
+
+# ── Self-fetch: make the one-liner work. When the component files aren't
+# next to this script (piped from curl), download them from the repo.
+RAW_BASE="https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze"
+DIR="$(dirname "${BASH_SOURCE[0]:-.}" 2>/dev/null || echo .)"
+need_fetch=0
+for f in unsqueeze-power.sh unsqueeze-fan.sh \
+         unsqueeze-power.service unsqueeze-power.timer \
+         unsqueeze-fan.service acpi_call.conf; do
+  [ -f "$DIR/$f" ] || need_fetch=1
+done
+if [ "$need_fetch" = "1" ]; then
+  if ! command -v curl >/dev/null 2>&1; then
+    printf '%scurl is required for the one-liner install. Install it or clone the repo.%s\n' "$RED" "$RESET" >&2
+    exit 1
+  fi
+  TDIR=$(mktemp -d)
+  echo "  fetching component files from the repo..."
+  for f in unsqueeze-power.sh unsqueeze-fan.sh \
+           unsqueeze-power.service unsqueeze-power.timer \
+           unsqueeze-fan.service acpi_call.conf; do
+    curl -fsSL "$RAW_BASE/$f" -o "$TDIR/$f" || {
+      printf '%sfailed to download %s%s\n' "$RED" "$f" "$RESET" >&2
+      exit 1
+    }
+  done
+  DIR="$TDIR"
 fi
 
 banner "Unsqueeze — ASUS Vivobook power/fan fix"
