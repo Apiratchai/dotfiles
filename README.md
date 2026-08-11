@@ -140,9 +140,9 @@ Extracted from wallpaper
 
 **Install (Fedora, needs sudo):**
 ```bash
-curl -sL https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze/install.sh | sudo bash
+sudo bash <(curl -sL https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze/install.sh)
 ```
-(Or from a clone: `sudo bash other/unsqueeze/install.sh`)
+(Or from a clone: `sudo bash other/unsqueeze/install.sh`. Note: use `<( )`, not `|` — a plain pipe replaces the keyboard with the curl stream, which breaks the interactive menus.)
 7-stage wizard: AC power budget (45/40/35W), fan behavior (balanced/aggressive/auto), battery budget (25/28/15W). Choices saved to `/etc/unsqueeze.conf` — re-run any time to change.
 
 **Verify:**
@@ -151,7 +151,7 @@ cat /sys/class/powercap/intel-rapl-mmio:0/constraint_0_power_limit_uw   # 450000
 openssl speed -multi 16 sha256     # ~19 GB/s vs ~11 GB/s before the fix
 ```
 
-**Result (measured, Geekbench 7, i5-12500H):** multi-core **7523** — up from 5127–6751 on clamped units, matching healthy sibling Vivobooks (~7730). [Result permalink](https://browser.geekbench.com/v7/cpu/116647)
+**Result (measured, Geekbench 7, i5-12500H, same CPU on all runs):** this machine after the fix: multi-core **7523** ([permalink](https://browser.geekbench.com/v7/cpu/116647)). Public reference runs of sibling Vivobooks (K3402ZA/K3502ZA, Windows): clamped units 5127–6751, healthy ~7730. Cross-machine comparison — for a same-machine before/after, the openssl check above (11.3 → 19.2 GB/s) is the controlled measurement.
 
 **Notes:** the fan is full-on or auto only (no duty cycle on this platform). The fix removes a design cap — the remaining gap to gaming laptops is cooling, not the bug.
 

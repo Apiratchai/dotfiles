@@ -352,7 +352,7 @@ write_env FAN_ON      "${FAN_ON:-78}"
 write_env FAN_OFF     "${FAN_OFF:-68}"
 write_env FAN_ENABLED "${FAN_ENABLED:-1}"
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# DIR was resolved (and files fetched if needed) before the banner.
 install -m 0755 "$DIR/unsqueeze-power.sh" /usr/local/sbin/unsqueeze-power.sh
 install -m 0755 "$DIR/unsqueeze-fan.sh"   /usr/local/sbin/unsqueeze-fan.sh
 install -m 0644 "$DIR/unsqueeze-power.service" /etc/systemd/system/
