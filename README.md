@@ -140,9 +140,9 @@ Extracted from wallpaper
 
 **Install (Fedora, needs sudo):**
 ```bash
-sudo bash <(curl -sL https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze/install.sh)
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze/install.sh)"
 ```
-(Or from a clone: `sudo bash other/unsqueeze/install.sh`. Note: use `<( )`, not `|` — a plain pipe replaces the keyboard with the curl stream, which breaks the interactive menus.)
+(Or from a clone: `sudo bash other/unsqueeze/install.sh`. Note: don't use `|` or `<( )` — sudo closes extra file descriptors and a pipe replaces the keyboard, which breaks the interactive menus.)
 7-stage wizard: AC power budget (45/40/35W), fan behavior (balanced/aggressive/auto), battery budget (25/28/15W). Choices saved to `/etc/unsqueeze.conf` — re-run any time to change.
 
 **Verify:**
