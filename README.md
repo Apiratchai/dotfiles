@@ -17,6 +17,7 @@
 - [Zsh Configuration (.zshrc)](#zsh-configuration-zshrc)  
 - [GNOME Extensions](#gnome-extensions)
 - [Color palette](#color-palette)
+- [Unsqueeze: ASUS Vivobook power/fan fix](#unsqueeze-asus-vivobook-powerfan-fix)
 
 ---
 
@@ -89,18 +90,19 @@ hard coded into `~/.config/kitty/kitty.conf`
 - List of GNOME extensions I use to improve desktop productivity.  
 - Installation via GNOME Extensions website.
 - Extentions used:  
-  - [**Blur My Shell**](https://github.com/aunetx/blur-my-shell) — add blur to gnome shell  
-  - [**Clipboard Histroy**](https://github.com/SUPERCILEX/gnome-clipboard-history) — clipborad manager
+  - [**Blur My Shell**](https://github.com/aunetx/blur-my-shell) - add blur to gnome shell  
+  - [**Clipboard Histroy**](https://github.com/SUPERCILEX/gnome-clipboard-history) - clipborad manager
     - [setting](other/clipboard_history.png)
 
   - [**Hibernate Status Button**](https://github.com/arelange/gnome-shell-extension-hibernate-status)
   - [**Open Bar**](https://github.com/neuromorph/openbar)
     - [setting](gnome/openbar_setting)
   - [**Rounded Window Corners**](https://github.com/yilozt/rounded-window-corners)
-  - [**Show Desktop Applet**](https://github.com/Valent-in/Show-Desktop-Applet) — add windows-like show desktop icon and shortkey
+  - [**Show Desktop Applet**](https://github.com/Valent-in/Show-Desktop-Applet) - add windows-like show desktop icon and shortkey
     - [setting](other/show_desktop_applet.png)
-  - [**Tiling Assistant**](https://github.com/Leleat/Tiling-Assistant) — better tiling tool
-    - [setting](other/tiling-asistant.png)
+  - ~~[**Tiling Assistant**](https://github.com/Leleat/Tiling-Assistant) - better tiling tool~~
+    - ~~[setting](other/tiling-asistant.png)~~
+  - [**gnome-snapnine**](https://github.com/Apiratchai/gnome-snapnine) - replaces Tiling Assistant
     - my keybindings has 2 conflicts with GNOME. please change the "Switch to workspace to the left/right"
   - [**Reorder Workspace**](https://github.com/smmr0/gnome-reorder-workspaces)
     - [setting](other/reorder_workspace.png)
@@ -127,4 +129,32 @@ Extracted from wallpaper
 
 ---
 
+## Unsqueeze: ASUS Vivobook power/fan fix
+
+**The problem:** ASUS ships Vivobooks (e.g. X1502ZA) with the CPU power capped at 15W and a fan curve that never spins up. Under load the laptop crawls at half speed while staying cold — a "lazy mode" with no firmware switch to fix it.
+
+**The fix:** an interactive installer that
+- raises the power cap to **45W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows)
+- ramps the fan to **full above 78°C**, quiet auto below 68°C
+- re-applies everything at boot (systemd) and after AC/battery switches
+
+**Install (Fedora, needs sudo):**
+```bash
+sudo bash other/unsqueeze/install.sh
+```
+7-stage wizard: AC power budget (45/40/35W), fan behavior (balanced/aggressive/auto), battery budget (25/28/15W). Choices saved to `/etc/unsqueeze.conf` — re-run any time to change.
+
+**Verify:**
+```bash
+cat /sys/class/powercap/intel-rapl-mmio:0/constraint_0_power_limit_uw   # 45000000, not 15000000
+openssl speed -multi 16 sha256     # ~19 GB/s vs ~11 GB/s before the fix
+```
+
+**Result (measured, Geekbench 7, i5-12500H):** multi-core **7523** — up from 5127–6751 on clamped units, matching healthy sibling Vivobooks (~7730). [Result permalink](https://browser.geekbench.com/v7/cpu/116647)
+
+**Notes:** the fan is full-on or auto only (no duty cycle on this platform). The fix removes a design cap — the remaining gap to gaming laptops is cooling, not the bug.
+
+---
+
 Feel free to explore and adapt
+

@@ -1,0 +1,12 @@
+[Unit]
+Description=Unsqueeze fan hysteresis daemon
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/unsqueeze-fan.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

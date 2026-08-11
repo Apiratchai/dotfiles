@@ -1,0 +1,10 @@
+[Unit]
+Description=Set MMIO RAPL power limits (AC/battery aware)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/unsqueeze-power.sh
+
+[Install]
+WantedBy=multi-user.target
