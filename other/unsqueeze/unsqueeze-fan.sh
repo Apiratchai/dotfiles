@@ -20,6 +20,7 @@ POLL=5
 [ -r "$CONF" ] && . "$CONF"
 
 state=auto
+hot_count=0
 
 [ "$FAN_ENABLED" = "1" ] || { echo "unsqueeze-fan: disabled in $CONF"; exit 0; }
 
@@ -46,10 +47,20 @@ fan_auto() {
 
 while true; do
     t=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
-    if [ "$state" = "auto" ] && [ "$t" -ge "$FAN_ON" ]; then
-        fan_full
-        state=full
-        echo "unsqueeze-fan: full (${t}C)"
+    if [ "$state" = "auto" ]; then
+        if [ "$t" -ge "$FAN_ON" ]; then
+            # Debounce: require 2 consecutive hot polls (~10s) before going
+            # full. Wake/resume sensor spikes last a single poll; real heat
+            # lasts minutes, so the delay is invisible.
+            hot_count=$((hot_count + 1))
+            if [ "$hot_count" -ge 2 ]; then
+                fan_full
+                state=full
+                echo "unsqueeze-fan: full (${t}C)"
+            fi
+        else
+            hot_count=0
+        fi
     elif [ "$state" = "full" ] && [ "$t" -le "$FAN_OFF" ]; then
         fan_auto
         state=auto
