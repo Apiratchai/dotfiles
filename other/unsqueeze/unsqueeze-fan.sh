@@ -87,10 +87,10 @@ while true; do
     if [ "$state" = "auto" ]; then
         if [ "$t" -ge "$FAN_ON" ]; then
             # Leaky debounce: hot polls accumulate, a single cool blip only
-            # decrements. Real heat reaches the threshold within a few polls;
-            # sensor noise can no longer reset the count.
+            # decrements. 2 hot polls (~10s) trigger so the fan beats short
+            # loads; alternating sensor garbage can't reach 2.
             hot_count=$((hot_count + 1))
-            if [ "$hot_count" -ge 3 ]; then
+            if [ "$hot_count" -ge 2 ]; then
                 fan_full
                 state=full
                 echo "unsqueeze-fan: full (${t}C)"
