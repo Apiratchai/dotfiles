@@ -219,33 +219,61 @@ banner() {
   printf '  ASUS ships this laptop with the CPU power capped at 15W and a\n'
   printf '  fan curve that never spins up — so under load it crawls at\n'
   printf '  half speed while staying cold, like a lazy mode.\n\n'
-  printf '  This fix raises the cap to 45W (25W on battery) and ramps the\n'
-  printf '  fan to full when it gets hot. You pick the profile per stage.\n'
-  printf '  Your choices are saved and applied at boot. Ctrl-C any time.\n\n'
+  printf '  This fix raises the cap to 40W (25W on battery) and ramps the\n'
+  printf '  fan to full when it gets hot. You pick the profile per stage\n'
+  printf '  with the arrow keys. Choices are saved and applied at boot.\n\n'
   pause "Ready to start?"
 }
 
 MENU_SEL=1
-# menu "prompt" "option1" "option2" ... — number menu; Enter picks option 1.
+# menu "prompt" "option1" "option2" ... — arrow-key selectable menu.
+# Up/Down or j/k to move, Enter (or the number) to pick. First option is
+# the recommended default. Falls back to option 1 when not interactive.
 menu() {
   local prompt="$1"; shift
   local opts=("$@")
-  printf '  %s%s%s\n' "$BOLD" "$prompt" "$RESET"
-  local i=1
-  for c in "${opts[@]}"; do
-    printf '    %s[%d]%s %s\n' "$BLUE" "$i" "$RESET" "$c"
-    i=$((i+1))
+  local n=${#opts[@]}
+  local sel=1 key seq rows=$((n + 2))
+  local i c
+
+  MENU_SEL=1
+  [[ "${UNSQUEEZE_ASSUME:-0}" = "1" ]] && return
+  [ -r /dev/tty ] || return
+
+  while true; do
+    printf '  %s%s%s\n' "$BOLD" "$prompt" "$RESET"
+    i=1
+    for c in "${opts[@]}"; do
+      if [ "$i" -eq "$sel" ]; then
+        printf '    %s▸ %s%s\n' "$GREEN" "$c" "$RESET"
+      else
+        printf '      %s\n' "$c"
+      fi
+      i=$((i+1))
+    done
+    printf '  %s↑/↓ or j/k move · Enter select%s\n' "$DIM" "$RESET"
+
+    read -rsn1 key < /dev/tty
+    case "$key" in
+      $'\e')
+        seq=""
+        read -rsn2 -t 0.3 seq < /dev/tty || true
+        case "$seq" in
+          '[A') sel=$((sel > 1 ? sel - 1 : n)) ;;
+          '[B') sel=$((sel < n ? sel + 1 : 1)) ;;
+        esac
+        ;;
+      $'\n'|$'\r'|'') break ;;
+      [1-9])
+        [ "$key" -ge 1 ] && [ "$key" -le "$n" ] && sel=$key
+        ;;
+      j) sel=$((sel < n ? sel + 1 : 1)) ;;
+      k) sel=$((sel > 1 ? sel - 1 : n)) ;;
+    esac
+    printf '\033[%dA\033[J' "$rows"
   done
-  local sel=""
-  if [[ "${UNSQUEEZE_ASSUME:-0}" != "1" ]]; then
-    printf '  %schoice [1-%d, Enter=1]:%s ' "$BOLD" "${#opts[@]}" "$RESET"
-    tty_read sel || true
-  fi
-  if [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "${#opts[@]}" ]; then
-    MENU_SEL="$sel"
-  else
-    MENU_SEL=1
-  fi
+  printf '\033[%dA\033[J' "$rows"
+  MENU_SEL=$sel
 }
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -304,12 +332,12 @@ pause "Continue?"
 # ── Stage 2: AC power budget ──────────────────────────────────────────────
 stage "AC power budget"
 menu "How much power on AC?" \
-  "Max — 45W (full TDP; fan will ramp under load)" \
-  "Balanced — 40W (near-max, a bit cooler)" \
-  "Quiet — 35W (auto fan can keep up alone)"
+  "40W — best balance (recommended, measured peak)" \
+  "45W — max throughput, lives at the 92C ceiling" \
+  "35W — coolest and quietest"
 case "$MENU_SEL" in
-  1) PL1_AC=45000000; PL2_AC=65000000 ;;
-  2) PL1_AC=40000000; PL2_AC=55000000 ;;
+  1) PL1_AC=40000000; PL2_AC=65000000 ;;
+  2) PL1_AC=45000000; PL2_AC=65000000 ;;
   3) PL1_AC=35000000; PL2_AC=45000000 ;;
 esac
 note "  → PL1 $((PL1_AC/1000000))W / PL2 $((PL2_AC/1000000))W on AC"
@@ -344,7 +372,7 @@ note "  → PL1 $((PL1_BAT/1000000))W on battery"
 stage "Install"
 note "saving choices to $ENV_FILE"
 touch "$ENV_FILE"
-write_env PL1_AC      "${PL1_AC:-45000000}"
+write_env PL1_AC      "${PL1_AC:-40000000}"
 write_env PL2_AC      "${PL2_AC:-65000000}"
 write_env PL1_BAT     "${PL1_BAT:-25000000}"
 write_env PL2_BAT     "${PL2_BAT:-45000000}"

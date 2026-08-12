@@ -134,7 +134,7 @@ Extracted from wallpaper
 **The problem:** ASUS ships Vivobooks (e.g. X1502ZA) with the CPU power capped at 15W and a fan curve that never spins up. Under load the laptop crawls at half speed while staying cold — a "lazy mode" with no firmware switch to fix it.
 
 **The fix:** an interactive installer that
-- raises the power cap to **45W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows)
+- raises the power cap to **40W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows; 40W measured as the sweet spot, 45W throttles at the 92°C ceiling)
 - ramps the fan to **full above 78°C**, quiet auto below 68°C
 - re-applies everything at boot (systemd) and after AC/battery switches
 
@@ -143,7 +143,7 @@ Extracted from wallpaper
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/Apiratchai/dotfiles/main/other/unsqueeze/install.sh)"
 ```
 (Or from a clone: `sudo bash other/unsqueeze/install.sh`. Note: don't use `|` or `<( )` — sudo closes extra file descriptors and a pipe replaces the keyboard, which breaks the interactive menus.)
-7-stage wizard: AC power budget (45/40/35W), fan behavior (balanced/aggressive/auto), battery budget (25/28/15W). Choices saved to `/etc/unsqueeze.conf` — re-run any time to change.
+7-stage wizard (arrow-key menus): AC power budget (40W recommended / 45W max / 35W quiet), fan behavior (balanced/aggressive/auto), battery budget (25W recommended / 28W / 15W). Choices saved to `/etc/unsqueeze.conf` — re-run any time to change.
 
 **Verify:**
 ```bash
