@@ -22,7 +22,6 @@ POLL=5
 state=auto
 hot_count=0
 cool_count=0
-t_prev=""       # last sane reading (delta filter)
 r1=0; r2=0; r3=0  # raw reading history (median filter)
 
 # median3 A B C — median of three integers.
@@ -75,27 +74,15 @@ fi
 
 while true; do
     raw=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
-    # Median-of-3: this platform's package sensor is noisy (swings of
-    # ~20C at idle are bogus). The median of the last 3 reads ignores a
-    # single garbage blip while real heat moves monotonically.
+    # Median-of-3: the package sensor can read transient outliers (wake
+    # spikes, background bursts). The median of the last 3 reads ignores a
+    # single outlier while real heat moves monotonically.
     r3=$r2; r2=$r1; r1=$raw
     if [ "$r3" -eq 0 ] || [ "$r2" -eq 0 ]; then
         t=$raw
     else
         t=$(median3 "$r1" "$r2" "$r3")
     fi
-
-    # Delta filter: a (median) reading jumping more than 25C within one 5s
-    # poll is physically impossible (a laptop heatsink ramps ~2C/s at most).
-    # Wake/resume sensor garbage does exactly this — ignore it.
-    if [ -n "$t_prev" ]; then
-        d=$(( t - t_prev )); [ "$d" -lt 0 ] && d=$(( -d ))
-        if [ "$d" -gt 25 ]; then
-            sleep "$POLL"
-            continue
-        fi
-    fi
-    t_prev=$t
 
     if [ "$state" = "auto" ]; then
         if [ "$t" -ge "$FAN_ON" ]; then
