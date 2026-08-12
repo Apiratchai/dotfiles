@@ -56,13 +56,26 @@ fan_auto() {
 
 while true; do
     t=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
+    # Delta filter: a reading jumping more than 25C within one 5s poll is
+    # physically impossible (a laptop heatsink ramps ~2C/s at most). Wake/
+    # resume sensor garbage does exactly this — ignore it, keep the last
+    # sane reading.
+    if [ -n "$t_prev" ]; then
+        d=$(( t - t_prev )); [ "$d" -lt 0 ] && d=$(( -d ))
+        if [ "$d" -gt 25 ]; then
+            sleep "$POLL"
+            continue
+        fi
+    fi
+    t_prev=$t
+
     if [ "$state" = "auto" ]; then
         if [ "$t" -ge "$FAN_ON" ]; then
-            # Debounce: require 2 consecutive hot polls (~10s) before going
-            # full. Wake/resume sensor spikes last a single poll; real heat
-            # lasts minutes, so the delay is invisible.
+            # Debounce: require 3 consecutive hot polls (~15s) before going
+            # full. Wake spikes can last a few polls; real heat lasts
+            # minutes, so the delay is invisible.
             hot_count=$((hot_count + 1))
-            if [ "$hot_count" -ge 2 ]; then
+            if [ "$hot_count" -ge 3 ]; then
                 fan_full
                 state=full
                 echo "unsqueeze-fan: full (${t}C)"
