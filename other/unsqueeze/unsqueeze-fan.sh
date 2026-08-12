@@ -21,7 +21,18 @@ POLL=5
 
 state=auto
 hot_count=0
-t_prev=""  # last sane reading (delta filter)
+cool_count=0
+t_prev=""       # last sane reading (delta filter)
+r1=0; r2=0; r3=0  # raw reading history (median filter)
+
+# median3 A B C — median of three integers.
+median3() {
+    local a=$1 b=$2 c=$3 hi lo
+    if [ "$a" -gt "$b" ]; then hi=$a; lo=$b; else hi=$b; lo=$a; fi
+    if   [ "$c" -gt "$hi" ]; then printf '%s' "$hi"
+    elif [ "$c" -lt "$lo" ]; then printf '%s' "$lo"
+    else printf '%s' "$c"; fi
+}
 
 [ "$FAN_ENABLED" = "1" ] || { echo "unsqueeze-fan: disabled in $CONF"; exit 0; }
 
@@ -63,11 +74,20 @@ if [ "$state" = "auto" ]; then
 fi
 
 while true; do
-    t=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
-    # Delta filter: a reading jumping more than 25C within one 5s poll is
-    # physically impossible (a laptop heatsink ramps ~2C/s at most). Wake/
-    # resume sensor garbage does exactly this — ignore it, keep the last
-    # sane reading.
+    raw=$(( $(cat "$TEMP" 2>/dev/null || echo 0) / 1000 ))
+    # Median-of-3: this platform's package sensor is noisy (swings of
+    # ~20C at idle are bogus). The median of the last 3 reads ignores a
+    # single garbage blip while real heat moves monotonically.
+    r3=$r2; r2=$r1; r1=$raw
+    if [ "$r3" -eq 0 ] || [ "$r2" -eq 0 ]; then
+        t=$raw
+    else
+        t=$(median3 "$r1" "$r2" "$r3")
+    fi
+
+    # Delta filter: a (median) reading jumping more than 25C within one 5s
+    # poll is physically impossible (a laptop heatsink ramps ~2C/s at most).
+    # Wake/resume sensor garbage does exactly this — ignore it.
     if [ -n "$t_prev" ]; then
         d=$(( t - t_prev )); [ "$d" -lt 0 ] && d=$(( -d ))
         if [ "$d" -gt 25 ]; then
@@ -79,22 +99,31 @@ while true; do
 
     if [ "$state" = "auto" ]; then
         if [ "$t" -ge "$FAN_ON" ]; then
-            # Debounce: require 3 consecutive hot polls (~15s) before going
-            # full. Wake spikes can last a few polls; real heat lasts
-            # minutes, so the delay is invisible.
+            # Leaky debounce: hot polls accumulate, a single cool blip only
+            # decrements. Real heat reaches the threshold within a few polls;
+            # sensor noise can no longer reset the count.
             hot_count=$((hot_count + 1))
             if [ "$hot_count" -ge 3 ]; then
                 fan_full
                 state=full
                 echo "unsqueeze-fan: full (${t}C)"
             fi
-        else
-            hot_count=0
+        elif [ "$hot_count" -gt 0 ]; then
+            hot_count=$((hot_count - 1))
         fi
-    elif [ "$state" = "full" ] && [ "$t" -le "$FAN_OFF" ]; then
-        fan_auto
-        state=auto
-        echo "unsqueeze-fan: auto (${t}C)"
+    elif [ "$state" = "full" ]; then
+        if [ "$t" -le "$FAN_OFF" ]; then
+            # Leaky release: require 2 cool polls so one noise blip doesn't
+            # drop the fan mid-load.
+            cool_count=$((cool_count + 1))
+            if [ "$cool_count" -ge 2 ]; then
+                fan_auto
+                state=auto
+                echo "unsqueeze-fan: auto (${t}C)"
+            fi
+        else
+            cool_count=0
+        fi
     fi
     sleep "$POLL"
 done
