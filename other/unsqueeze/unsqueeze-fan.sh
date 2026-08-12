@@ -21,6 +21,7 @@ POLL=5
 
 state=auto
 hot_count=0
+t_prev=""  # last sane reading (delta filter)
 
 [ "$FAN_ENABLED" = "1" ] || { echo "unsqueeze-fan: disabled in $CONF"; exit 0; }
 
