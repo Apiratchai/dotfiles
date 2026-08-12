@@ -42,6 +42,13 @@ done
 
 modprobe acpi_call 2>/dev/null || true
 
+# Take ownership of the fan at start: if we begin in the auto state, make
+# sure the EC auto curve is actually engaged (clears any leftover manual
+# full-speed override, e.g. from a manual pwm1_enable=0).
+if [ "$state" = "auto" ]; then
+    fan_auto
+fi
+
 fan_full() {
     # Kernel WMI full-speed is the reliable path (works in every EC state).
     echo 0 > "$PWM" 2>/dev/null
