@@ -12,8 +12,8 @@ PWM=/sys/class/hwmon/hwmon4/pwm1_enable
 ACPI_CALL=/proc/acpi/call
 CONF=/etc/unsqueeze.conf
 
-FAN_ON=78
-FAN_OFF=68
+FAN_ON=85
+FAN_OFF=75
 FAN_ENABLED=1
 POLL=5
 

@@ -345,11 +345,11 @@ note "  → PL1 $((PL1_AC/1000000))W / PL2 $((PL2_AC/1000000))W on AC"
 # ── Stage 3: fan behavior ─────────────────────────────────────────────────
 stage "Fan behavior"
 menu "When should the fan go full speed?" \
-  "Balanced — full above 78C, quiet below 68C (recommended)" \
+  "Balanced — full above 85C, quiet below 75C (recommended)" \
   "Aggressive — full above 72C, quiet below 62C" \
   "Auto only — leave the EC in charge (best with 35W)"
 case "$MENU_SEL" in
-  1) FAN_ON=78;  FAN_OFF=68; FAN_ENABLED=1 ;;
+  1) FAN_ON=85;  FAN_OFF=75; FAN_ENABLED=1 ;;
   2) FAN_ON=72;  FAN_OFF=62; FAN_ENABLED=1 ;;
   3) FAN_ON=95;  FAN_OFF=90; FAN_ENABLED=0 ;;
 esac
@@ -376,8 +376,8 @@ write_env PL1_AC      "${PL1_AC:-40000000}"
 write_env PL2_AC      "${PL2_AC:-65000000}"
 write_env PL1_BAT     "${PL1_BAT:-25000000}"
 write_env PL2_BAT     "${PL2_BAT:-45000000}"
-write_env FAN_ON      "${FAN_ON:-78}"
-write_env FAN_OFF     "${FAN_OFF:-68}"
+write_env FAN_ON      "${FAN_ON:-85}"
+write_env FAN_OFF     "${FAN_OFF:-75}"
 write_env FAN_ENABLED "${FAN_ENABLED:-1}"
 
 # DIR was resolved (and files fetched if needed) before the banner.
