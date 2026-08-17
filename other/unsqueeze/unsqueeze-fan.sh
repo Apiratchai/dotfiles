@@ -7,8 +7,14 @@
 # Polls every POLL seconds; only writes on state change.
 set -u
 
-TEMP=/sys/class/thermal/thermal_zone12/temp
-PWM=/sys/class/hwmon/hwmon4/pwm1_enable
+# Thermal zone / hwmon numbers are NOT stable on this platform: a late-
+# registering zone (e.g. iwlwifi) shifts every subsequent zone by one, so a
+# hardcoded thermal_zone12 silently starts reading the wifi temp while the
+# CPU bakes. Resolve both sources by name at startup instead.
+TEMP_SRC=x86_pkg_temp
+PWM_HW=asus
+TEMP=""
+PWM=""
 ACPI_CALL=/proc/acpi/call
 CONF=/etc/unsqueeze.conf
 
@@ -35,20 +41,45 @@ median3() {
 
 [ "$FAN_ENABLED" = "1" ] || { echo "unsqueeze-fan: disabled in $CONF"; exit 0; }
 
-for i in $(seq 1 20); do
-    [ -r "$TEMP" ] && break
+# Resolve the temp zone whose type matches TEMP_SRC.
+resolve_temp() {
+    for z in /sys/class/thermal/thermal_zone*; do
+        if [ "$(cat "$z/type" 2>/dev/null)" = "$TEMP_SRC" ]; then
+            TEMP="$z/temp"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Resolve the hwmon dir whose name matches PWM_HW, then point at pwm1_enable.
+resolve_pwm() {
+    for d in /sys/class/hwmon/hwmon*; do
+        if [ "$(cat "$d/name" 2>/dev/null)" = "$PWM_HW" ]; then
+            PWM="$d/pwm1_enable"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Zones/hwmons may register late at boot; retry before failing.
+for i in $(seq 1 30); do
+    resolve_temp && break
     sleep 1
 done
-[ -r "$TEMP" ] || { echo "unsqueeze-fan: no temp source" >&2; exit 1; }
+[ -r "$TEMP" ] || { echo "unsqueeze-fan: temp zone '$TEMP_SRC' not found" >&2; exit 1; }
 
 # Without a writable pwm node every fan write would silently no-op while
 # the daemon still reports "full".  Fail fast instead (Restart=always
 # retries if the node only appears late).
-for i in $(seq 1 20); do
-    [ -w "$PWM" ] && break
+for i in $(seq 1 30); do
+    resolve_pwm && break
     sleep 1
 done
-[ -w "$PWM" ] || { echo "unsqueeze-fan: no writable pwm node ($PWM)" >&2; exit 1; }
+[ -w "$PWM" ] || { echo "unsqueeze-fan: writable pwm for '$PWM_HW' not found" >&2; exit 1; }
+
+echo "unsqueeze-fan: temp=$TEMP pwm=$PWM"
 
 modprobe acpi_call 2>/dev/null || true
 
