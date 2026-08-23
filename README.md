@@ -135,7 +135,7 @@ Extracted from wallpaper
 
 **The fix:** an interactive installer that
 - raises the power cap to **40W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows; 40W measured as the sweet spot, 45W throttles at the 92°C ceiling)
-- ramps the fan to **full above 78°C**, quiet auto below 68°C
+- fan daemon: **full ≥85°C** sustained ~30 s, quiet **auto ≤75°C** (aggressive profile 72/62). The trigger reads the **average of all cores**, so one hot core can't fire it — measured: package at 91°C while the core average sat at ~76°C and the daemon stayed quiet, EC auto curve carrying the load. Full speed is reserved for sustained all-core heat.
 - re-applies everything at boot (systemd) and after AC/battery switches
 
 **Install (Fedora, needs sudo):**
