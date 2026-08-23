@@ -12,9 +12,9 @@ set -u
 # hardcoded thermal_zone12 silently starts reading the wifi temp while the
 # CPU bakes. Resolve both sources by name at startup instead.
 TEMP_SRC=x86_pkg_temp
-# pkg = package sensor (spikey, tracks hottest core); avg = average of all
-# cores (smooth, but can hide one genuinely hot core); max = hottest core.
-TEMP_MODE=avg
+# pkg = package sensor (tracks hottest core, EC's own); avg = average of all
+# cores (smooth, but hides one hot core — 91°C pkg while avg ~62°C); max = hottest core (spiky).
+TEMP_MODE=pkg
 PWM_HW=asus
 TEMP=""
 PWM=""

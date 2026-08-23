@@ -18,6 +18,7 @@
 - [GNOME Extensions](#gnome-extensions)
 - [Color palette](#color-palette)
 - [Unsqueeze: ASUS Vivobook power/fan fix](#unsqueeze-asus-vivobook-powerfan-fix)
+- [Btrfs snapshots: Snapper setup & how it works](#btrfs-snapshots-snapper-setup--how-it-works)
 
 ---
 
@@ -135,7 +136,7 @@ Extracted from wallpaper
 
 **The fix:** an interactive installer that
 - raises the power cap to **40W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows; 40W measured as the sweet spot, 45W throttles at the 92°C ceiling)
-- fan daemon: **full ≥85°C** sustained ~30 s, quiet **auto ≤75°C** (aggressive profile 72/62). The trigger reads the **average of all cores**, so one hot core can't fire it — measured: package at 91°C while the core average sat at ~76°C and the daemon stayed quiet, EC auto curve carrying the load. Full speed is reserved for sustained all-core heat.
+ - fan daemon: **full ≥85°C** sustained ~30 s, quiet **auto ≤75°C** (aggressive profile 72/62). The trigger reads the **package sensor** (`x86_pkg_temp`, EC's own), with median-of-3 + `HOT_POLLS` debounce so a single spike doesn't fire it — old `avg` mode hid heat (91°C pkg while avg ~62°C) and stayed quiet through throttling. Full speed is reserved for sustained heat.
 - re-applies everything at boot (systemd) and after AC/battery switches
 
 **Install (Fedora, needs sudo):**
@@ -154,6 +155,90 @@ openssl speed -multi 16 sha256     # ~19 GB/s vs ~11 GB/s before the fix
 **Result (measured, Geekbench 7, i5-12500H, same CPU on all runs):** this machine after the fix: multi-core **7523** ([permalink](https://browser.geekbench.com/v7/cpu/116647)). Public reference runs of sibling Vivobooks (K3402ZA/K3502ZA, Windows): clamped units 5127–6751, healthy ~7730. Cross-machine comparison — for a same-machine before/after, the openssl check above (11.3 → 19.2 GB/s) is the controlled measurement.
 
 **Notes:** the fan is full-on or auto only (no duty cycle on this platform). The fix removes a design cap — the remaining gap to gaming laptops is cooling, not the bug.
+
+---
+
+## Btrfs snapshots: Snapper setup & how it works
+
+Hourly timeline snapshots for `/` and `/home`, with retention tuned so that deleting a big file doesn't hold its blocks hostage for weeks. `~/Downloads` lives in its own nested subvolume with a separate, shorter policy.
+
+### Why
+
+Btrfs snapshots are copy-on-write: they don't copy data, they *pin* it. Any file that existed when a snapshot was taken keeps its disk blocks allocated until **every** snapshot referencing them is deleted. With Fedora's default-ish hourly snapshots and generous retention, a 15 GB ISO you download and delete next week stays on disk long after `rm` — the classic "one way trip". This setup makes reclaim time predictable and short.
+
+### Retention policy
+
+| Config | Scope | HOURLY | DAILY | Worst-case pin after deleting a big file |
+|---|---|---|---|---|
+| `root` | system | 12 | 14 | ~14 days |
+| `home` | `/home` (except nested subvols) | 12 | 14 | ~14 days |
+| `downloads` | `~/Downloads` only | 12 | 0 | **~12 hours** |
+
+Sleep-one-night rule of thumb: 12 hourly snapshots ≈ half a day, so anything deleted before bed is still recoverable in the morning.
+
+### Setup (after a fresh Fedora install)
+
+Fedora already uses btrfs with subvolumes `root` → `/` and `home` → `/home`.
+
+1. Install snapper and enable its timers:
+    ```bash
+    sudo dnf install snapper
+    sudo systemctl enable --now snapper-timeline.timer snapper-cleanup.timer
+    ```
+2. Create configs (one per subvolume):
+    ```bash
+    sudo snapper create-config /
+    sudo snapper create-config /home
+    ```
+3. Set retention — 12 hours + 2 weeks:
+    ```bash
+    sudo snapper -c root set-config 'TIMELINE_LIMIT_HOURLY=12' 'TIMELINE_LIMIT_DAILY=14'
+    sudo snapper -c home set-config 'TIMELINE_LIMIT_HOURLY=12' 'TIMELINE_LIMIT_DAILY=14'
+    ```
+4. Convert `~/Downloads` into a nested subvolume so it escapes `/home` snapshots entirely
+   (btrfs snapshots never descend into child subvolumes; must be done from outside the dir, no live USB needed):
+    ```bash
+    mv ~/Downloads ~/Downloads.old
+    sudo btrfs subvolume create /home/apiratchai/Downloads
+    sudo chown apiratchai:apiratchai /home/apiratchai/Downloads
+    cp -a --reflink=auto ~/Downloads.old/. ~/Downloads/
+    du -sh ~/Downloads ~/Downloads.old   # sizes must match
+    rm -rf ~/Downloads.old               # only after verifying
+    # verify: device ID should differ from regular dirs
+    stat -c '%D %n' ~/Downloads ~/Documents
+    ```
+5. Give Downloads its own short-retention config (safety net without space hostage-taking):
+    ```bash
+    sudo snapper -c downloads create-config /home/apiratchai/Downloads
+    sudo snapper -c downloads set-config \
+        'TIMELINE_CREATE=yes' 'TIMELINE_LIMIT_HOURLY=12' \
+        'TIMELINE_LIMIT_DAILY=0' 'TIMELINE_LIMIT_WEEKLY=0'
+    ```
+6. Keep quotas **off** (Fedora default). They exist only as a measuring tool:
+    ```bash
+    # temporarily enable to see which snapshot eats what...
+    sudo btrfs quota enable / && sudo btrfs quota rescan -w /
+    sudo btrfs qgroup show --sync --sort=-excl / | head -30
+    sudo btrfs quota disable /          # ...then always turn back off.
+    ```
+    Quotas add accounting overhead to every extent operation — mass snapshot deletions become slow and cause UI stutter. Don't leave them enabled.
+
+### How it works (mental model)
+
+- A snapshot = a frozen view sharing all blocks with the live filesystem. Unchanged files cost **0 extra space**; changed files cost one new block-set per snapshot (≈ incremental backup at block level).
+- Deleting a file only decrements block reference counts. Blocks reach zero refs — i.e. actually free — only after every snapshot containing them is pruned by cleanup. That's why `df` lags behind big deletions by up to the retention window. Expected behaviour, not a bug.
+- `snapper-timeline.timer` takes an hourly snapshot of each config; `snapper-cleanup.timer` (every ~35 min) prunes whatever exceeds the limits above.
+- Restoring: browse `/.snapshots/<N>/snapshot/...` or `/home/.snapshots/<N>/snapshot/...` and copy files out, or use `sudo snapper -c <cfg> undochange <ID>..0 <path>`.
+- Never delete the `.snapshots` directories themselves.
+
+### Cheat sheet
+
+```bash
+snapper list-configs                 # all configs (needs sudo)
+sudo snapper -c home list            # restore points + ids
+df -h /                              # real free space
+uptime                               # load after mass deletions (should settle < ~2)
+```
 
 ---
 
