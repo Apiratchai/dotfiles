@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # unsqueeze-fan.sh — binary fan hysteresis daemon.
-# Temp (per TEMP_MODE: pkg/avg/max) >= FAN_ON: fan FULL speed (kernel WMI,
+# Temp (per TEMP_MODE: pkg/avg/max/top5) >= FAN_ON: fan FULL speed (kernel WMI,
 # plus EC SPIN bonus). Temp <= FAN_OFF: back to EC auto (quiet).
 # The wide deadband (FAN_ON - FAN_OFF = 10C) guarantees no toggling around
 # the boundary: once full, it stays full until the temp drops well below.
@@ -13,8 +13,9 @@ set -u
 # CPU bakes. Resolve both sources by name at startup instead.
 TEMP_SRC=x86_pkg_temp
 # pkg = package sensor (tracks hottest core, EC's own); avg = average of all
-# cores (smooth, but hides one hot core — 91°C pkg while avg ~62°C); max = hottest core (spiky).
-TEMP_MODE=pkg
+# cores (smooth, but hides one hot core — 91°C pkg while avg ~62°C); max = hottest core (spiky);
+# top5 = average of 5 hottest cores (ignores package/iGPU, smooth but still reacts to real load).
+TEMP_MODE=top5
 PWM_HW=asus
 TEMP=""
 PWM=""
@@ -104,6 +105,18 @@ read_temp() {
             done
             [ "$m" -gt 0 ] || { cat "$TEMP" 2>/dev/null; return; }
             printf '%s' "$((m / 1000))"
+            ;;
+        top5)
+            # average of 5 hottest cores — ignores Package/iGPU, like avg but weighted to hot cores
+            local temps=() t
+            for f in "$CORE_HW"/*_input; do
+                local lab="${f%_input}_label"
+                [ -r "$lab" ] && [ "$(cat "$lab" 2>/dev/null)" != "Package id 0" ] || continue
+                t=$(cat "$f" 2>/dev/null) || continue
+                temps+=("$t")
+            done
+            [ "${#temps[@]}" -gt 0 ] || { cat "$TEMP" 2>/dev/null | awk '{print int($1/1000)}'; return; }
+            printf '%s' "$(printf '%s\n' "${temps[@]}" | sort -nr | head -n 5 | awk '{s+=$1; n++} END {if(n) print int(s/n/1000); else print 0}')"
             ;;
         *)  # pkg
             cat "$TEMP" 2>/dev/null | awk '{print int($1/1000)}'

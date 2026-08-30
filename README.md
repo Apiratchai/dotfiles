@@ -136,7 +136,7 @@ Extracted from wallpaper
 
 **The fix:** an interactive installer that
 - raises the power cap to **40W on AC / 25W on battery** (via the MMIO RAPL registers — the same ones Intel XTU touches on Windows; 40W measured as the sweet spot, 45W throttles at the 92°C ceiling)
- - fan daemon: **full ≥85°C** sustained ~30 s, quiet **auto ≤75°C** (aggressive profile 72/62). The trigger reads the **package sensor** (`x86_pkg_temp`, EC's own), with median-of-3 + `HOT_POLLS` debounce so a single spike doesn't fire it — old `avg` mode hid heat (91°C pkg while avg ~62°C) and stayed quiet through throttling. Full speed is reserved for sustained heat.
+ - fan daemon: **full ≥85°C** sustained ~30 s, quiet **auto ≤75°C** (aggressive profile 72/62). The trigger reads the **average of the 5 hottest cores** (`top5`, ignores `Package`/`iGPU`), with median-of-3 + `HOT_POLLS` debounce so a single spike doesn't fire it — old `pkg` mode fired on iGPU/package heat while cores were cool; old `avg` hid heat (91°C pkg while avg ~62°C) and stayed quiet through throttling. Full speed is reserved for sustained heat.
 - re-applies everything at boot (systemd) and after AC/battery switches
 
 **Install (Fedora, needs sudo):**
